@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+logs/
+
+# OS
+.DS_Store
+
+# temp
+tmp/
+temp/
+.cache/
+
+# optional (kalau config sensitif)
+config/config.json
+
+# optional (kalau bukan untuk repo)
+data/*.json
