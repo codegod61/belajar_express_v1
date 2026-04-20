@@ -42,7 +42,6 @@ export const login = async (req, res, next) => {
 }
 
 export const register = async (req, res, next) => {
-    res.send('register endpoint exists');
     try {
         const { email, name, password } = req.body;
 
