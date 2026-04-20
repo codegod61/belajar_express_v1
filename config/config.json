@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "postgres",
+    "database": "belajar_express_v2",
+    "host": "db",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "mtaufiqh",
+    "password": null,
+    "database": "belajar_express_v2",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "mtaufiqh",
+    "password": null,
+    "database": "belajar_express_v2",
+    "host": "localhost",
+    "dialect": "postgres"
+  }
+}
