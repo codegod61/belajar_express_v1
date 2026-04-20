@@ -6,7 +6,6 @@ const app = express();
 import usersRoute from '../routes/userRoutes.js';
 import productRoute from '../routes/productRoutes.js';
 import authRoute from '../routes/authRoutes.js';
-import pool from '../config/dbConfig.js';
 
 app.use(express.json()) // for parsing application/json
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
@@ -15,9 +14,6 @@ app.use(express.urlencoded({ extended: true })) // for parsing application/x-www
 app.use('/v1/auth', authRoute);
 app.use('/users', usersRoute);
 app.use('/products', productRoute);
-
-await pool.query('SELECT 1');
-console.log('DB connected');
 
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({
