@@ -37,7 +37,7 @@ jobs:
           DB_HOST: localhost
           DB_USER: postgres
           DB_PASSWORD: postgres
-          DB_NAME_TEST: belajar_express_test
+          DB_NAME: belajar_express_test
           DB_PORT: 5432
           NODE_ENV: test
         run: npx sequelize-cli db:migrate --env test
@@ -47,7 +47,7 @@ jobs:
           DB_HOST: localhost
           DB_USER: postgres
           DB_PASSWORD: postgres
-          DB_NAME_TEST: belajar_express_test
+          DB_NAME: belajar_express_test
           DB_PORT: 5432
           NODE_ENV: test
         run: npm test
