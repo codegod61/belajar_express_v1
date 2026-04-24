@@ -7,10 +7,10 @@ export default {
     "dialect": "postgres"
   },
   "test": {
-    "username": process.env.PGUSER,
-    "password": process.env.PGPASSWORD,
-    "database": process.env.PGDATABASE,
-    "host": process.env.PGHOST,
+    "username": process.env.DB_USER,
+    "password": process.env.DB_PASSWORD,
+    "database": process.env.DB_NAME_TEST,
+    "host": process.env.DB_HOST,
     "dialect": "postgres"
   },
   "production": {
