@@ -1,18 +1,19 @@
-import { getUsers, createUser, filterUser, deleteUserById, getUserById } from '../services/userServices.js';
+import { getUsers, createUser,deleteUserById, getUserById } from '../services/userServices.js';
 
-export async function getUsersData(req, res, next) {
+export async function getUsersData(req, res, next){
     try {
         const { page, limit, searchName, searchEmail } = req.query;
+        req.log.info({ page, limit, searchName, searchEmail }, 'Get users request');
 
         const data = await getUsers({ page, limit, searchName, searchEmail });
+
+        req.log.info({ total: data.total, page: data.page, limit }, 'Get users response');
 
         const filterData = data.result.map((item) => ({
             id: item.id,
             name: item.name,
             email: item.email
         }));
-
-        // const data = await filterUser({ queryEmail, queryUsername, queryPage, queryLimit });
 
         return res.status(200).json({
             message: "Data Found",
@@ -24,22 +25,7 @@ export async function getUsersData(req, res, next) {
             }
         })
     } catch (err) {
-        next(err);
-    }
-}
-
-export async function filterUsersData(req, res, next) {
-    try {
-        // filter query
-        const { nama, alamat } = req.query;
-
-        // validasi query
-        const data = await filterUser({ nama, alamat })
-
-        return res.status(200).json({
-            message: data.message, data: data.resultQuery
-        })
-    } catch (err) {
+        req.log.error(err, 'Get users failed');
         next(err);
     }
 }
@@ -100,9 +86,12 @@ export async function getUserDataById(req, res, next) {
     try {
         // parse id menjadi Integer
         const id = req.params.id;
+        req.log.info({ id }, 'Get user by ID request');
 
         const result = await getUserById(id);
         const { idUser, name, email, created_at, updated_at } = result;
+
+        req.log.info({ id: idUser }, 'Get user by ID success');
 
         // response
         return res.status(200).json({
@@ -117,6 +106,7 @@ export async function getUserDataById(req, res, next) {
         })
 
     } catch (err) {
+        req.log.error(err, 'Get user by ID failed');
         next(err);
     }
 }
@@ -124,9 +114,12 @@ export async function getUserDataById(req, res, next) {
 export async function deleteUserData(req, res, next) {
     try {
         // params id parse ke integer
-        const id = parseInt(req.params.id);
+        const id = req.params.id;
+        req.log.info({ id }, 'Delete user request');
 
         const data = await deleteUserById(id);
+
+        req.log.info({ id }, 'Delete user success');
 
         // response
         return res.status(200).json({
@@ -135,6 +128,7 @@ export async function deleteUserData(req, res, next) {
         })
 
     } catch (err) {
+        req.log.error(err, 'Delete user failed');
         next(err);
     }
 }

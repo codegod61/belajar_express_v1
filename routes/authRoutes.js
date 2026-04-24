@@ -1,14 +1,12 @@
 import express from 'express';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
 import * as AuthControllers from '../controllers/authControllers.js';
-import { logMethod, logOriginalUrl } from '../utils/logger.js';
+import { validate } from '../middlewares/validate.js';
+import { schemaRegisterUser, schemaLoginUser } from '../validations/joiValidation.js';
 
 const router = express.Router();
 
-const logStuff = [logOriginalUrl, logMethod]
+router.post('/register', validate(schemaRegisterUser), AuthControllers.register);
 
-router.post('/register', logStuff, AuthControllers.register);
-
-router.post('/login', logStuff, AuthControllers.login);
+router.post('/login', validate(schemaLoginUser), AuthControllers.login);
 
 export default router;

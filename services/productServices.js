@@ -1,12 +1,11 @@
 import fs from 'fs/promises';
 import pool from '../config/dbConfig.js';
 import { generateId } from '../utils/ulid.js';
+import AppError from '../utils/errorHandling.js';
 
 export async function getDataProducts({ page = 1, limit = 10, prodName, priceStart = 0, priceEnd = 99999999, prodDesc }) {
     if(priceStart < 0 || priceEnd < 0) {
-        const err = new Error('Price cannot be negative');
-        err.status = 400;
-        throw err;
+        throw new AppError('Price must be greater than or equal to 0', 400, []);
     }
     
     const offset = (page - 1) * limit;
@@ -55,15 +54,11 @@ export async function getDataProducts({ page = 1, limit = 10, prodName, priceSta
     const total = parseInt(countQuery.rows[0].count);
 
     if(page < 1 || page > Math.ceil(total / limit)) {
-        const err = new Error('Invalid page number');
-        err.status = 400;
-        throw err;
+        throw new AppError('Page Not Found', 404, []);
     }
 
     if(limit < 1) {
-        const err = new Error('Limit must be greater than 0');
-        err.status = 400;
-        throw err;
+        throw new AppError('Limit must be greater than 0', 400, []);
     }
 
     return {
@@ -74,114 +69,6 @@ export async function getDataProducts({ page = 1, limit = 10, prodName, priceSta
     };
 }
 
-export async function filterDataProducts({ prodName, prodPrice, prodDesc, queryPage, queryLimit}) {
-        const data = await getDataProducts();
-
-        if(data.length === 0) {
-            const err = new Error('Data is empty');
-            err.status = 404;
-            throw err;
-        }
-
-        let queryProdName = prodName || "";
-        let queryProdPrice = prodPrice;
-        let queryProdDesc = prodDesc || "";
-        let page = parseInt(queryPage) || 1;
-        let limit = parseInt(queryLimit) || 10;
-        const startIndex = (page - 1) * limit;
-
-        const filteredData = data.filter((item) => {
-            const searchProdName = item.name.toLowerCase().includes(queryProdName.toLowerCase());
-            const searchProdPrice = queryProdPrice ? item.price.toString().includes(queryProdPrice.toString()) : true;
-            const searchProdDesc = item.description.toLowerCase().includes(queryProdDesc.toLowerCase());
-
-            if(queryProdName && !searchProdName) {
-                return false;
-            }
-
-            if(queryProdPrice && !searchProdPrice) {
-                return false;
-            }
-
-            if(queryProdDesc && !searchProdDesc) {
-                return false;
-            }
-
-            return true;
-        })
-
-        const total = filteredData.length;
-
-        const filter = filteredData.slice(startIndex, startIndex + limit);
-        
-        if(page > Math.ceil(total / limit)) {
-            const err = new Error('Page Not Found');
-            err.status = 404;
-            throw err;
-        }
-
-        return { filter, total, page, totalPages: Math.ceil(total / limit) }
-}
-
-// export async function filterDataProducts({ name, price, description }) {
-//     const data = await getDataProducts();
-//     let message;
-//     let result;
-//     let queryName = name || '';
-//     let queryPrice = price || '';
-//     let queryDesc = description || '';
-
-//     if(data.length === 0) {
-//         const err = new Error('Data is Empty');
-//         err.status = 404;
-//         throw err;
-//     }
-
-//     const resultQuery = data.filter((item) => {
-//         const matchName = item.name.toLowerCase().includes(queryName.toLowerCase());
-//         const matchPrice = item.price.toString().includes(queryPrice.toString());
-//         const matchDesc = item.description.toLowerCase().includes(queryDesc.toLowerCase());
-
-//         if(queryName && !matchName) {
-//             return false;
-//         } else if (queryPrice && !matchPrice) {
-//             return false;
-//         } else if (queryDesc && !matchDesc) {
-//             return false
-//         } else {
-//             return true;
-//         }
-//     });
-
-//     if(queryName && queryPrice && queryDesc) {
-//         message = 'Data found with name, price and description';
-//         result = resultQuery;
-//     } else if (queryName && queryPrice) {
-//         message = 'Data found with name and price';
-//         result = resultQuery;
-//     } else if (queryName && queryDesc) {
-//         message = 'Data found with name and description';
-//         result = resultQuery;
-//     } else if (queryPrice && queryDesc) {
-//         message = 'Data found with price and description';
-//         result = resultQuery;
-//     } else if (queryName) {
-//         message = 'Data found with name';
-//         result = resultQuery;
-//     } else if (queryPrice) {
-//         message = 'Data found with price';
-//         result = resultQuery;
-//     } else if (queryDesc) {
-//         message = 'Data found with description';
-//         result = resultQuery;
-//     } else {
-//         message = 'No query provided, showing all data';
-//         result = data;
-//     }
-
-//     return { message, data: result };
-// }
-
 export async function createDataProduct(newProduct) {
     const id = generateId();
 
@@ -191,42 +78,32 @@ export async function createDataProduct(newProduct) {
     );
     
     if(result.rowCount === 0) {
-        const err = new Error('Failed to create data');
-        err.status = 500;
-        throw err;
+        throw new AppError('Failed to create data', 500, []);
     }
 
     return;
 }
 
 export async function getProductDataById(id) {
-    const data = await getDataProducts();
+    const data = await pool.query(`SELECT * FROM products WHERE id = $1`, [id]);
 
-    const item = data.find((item) => item.id === id);
+    const item = data.rows[0];
 
     if(!item) {
-        const err = new Error('Data Not Found');
-        err.status = 404;
-        throw err;
+        throw new AppError('Data Not Found', 404, []);
     }
 
     return item;
 }
 
 export async function deleteProductDataById(id) {
-    const data = await getDataProducts();
+    const data = await pool.query(`DELETE FROM products WHERE id = $1 RETURNING *`, [id]);
 
-    const item = data.find((item) => item.id === id);
+    const item = data.rows[0];
 
     if(!item) {
-        const err = new Error('Data Not Found');
-        err.status = 404;
-        throw err;
+        throw new AppError('Data Not Found', 404, []);
     }
-
-    const newData = data.filter((item) => item.id !== id);
-
-    await fs.writeFile('data/products.json', JSON.stringify(newData, null, 2));
 
     return item;
 }

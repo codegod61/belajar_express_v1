@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import pool from '../config/dbConfig.js';
+import AppError from '../utils/errorHandling.js';
 
 export async function getUsers({ page = 1, limit = 10, searchName, searchEmail }) {
     const offset = (page - 1) * limit;
@@ -37,15 +38,11 @@ export async function getUsers({ page = 1, limit = 10, searchName, searchEmail }
     const total = parseInt(countResult.rows[0].count);
 
     if(page < 1 || page > Math.ceil(total / limit)) {
-        const err = new Error('Invalid page number');
-        err.status = 400;
-        throw err;
+        throw new AppError('Page Not Found', 404, []);
     }
 
     if(limit < 1) {
-        const err = new Error('Limit must be greater than 0');
-        err.status = 400;
-        throw err;
+        throw new AppError('Limit must be greater than 0', 400, []);
     }
 
     return {
@@ -55,90 +52,6 @@ export async function getUsers({ page = 1, limit = 10, searchName, searchEmail }
         totalPages: Math.ceil(total / limit)
     };
 }
-
-export async function filterUser({ queryEmail, queryUsername, queryPage, queryLimit }) {
-    const data = await getUsers();
-
-    if(data.length === 0) {
-        const err = new Error('Data is empty');
-        err.status = 404;
-        throw err;
-    }
-
-    const filterData = data.map((item) => ({
-        id: item.id,
-        email: item.email,
-        username: item.username
-    }));
-
-
-    let page = parseInt(queryPage) || 1;
-    let limit = parseInt(queryLimit) || 10;
-    const searchEmail = queryEmail || "";
-    const searchName = queryUsername || "";
-
-    // sebagai startIndex
-    const skip = (page - 1) * limit;
-
-    const filteredData = filterData.filter((item) => {
-        const filterEmail = item.email.toLowerCase().includes(searchEmail.toLowerCase());
-        const filterName = item.username.toLowerCase().includes(searchName.toLowerCase());
-
-        if (searchEmail && !filterEmail) {
-            return false;
-        }
-
-        if (searchName && !filterName) {
-            return false
-        }
-
-        return true
-    });
-
-    const total = filteredData.length;
-
-    const result = filteredData.slice(skip, skip + limit);
-
-    if(page > Math.ceil(total / limit)) {
-        const err = new Error('Page Not Found');
-        err.status = 404;
-        throw err;
-    }
-    
-    return { result, page, total, totalPages: Math.ceil(total / limit) };
-}
-
-// export async function filterUser({ nama, alamat }) {
-//     const data = await getUsers();
-
-//     // dibawah ini untuk filter data
-//     const name = nama || '';
-//     const address = alamat || '';
-
-//     let resultQuery = data.filter((item) => {
-//         const matchName = item.nama.toLowerCase().includes(name.toLowerCase());
-//         const matchAddress = item.alamat.toLowerCase().includes(address.toLowerCase());
-//         // jika name diisi DAN matchName kosong, maka return false
-//         if (name && !matchName) {
-//             return false;
-//         } else if (address && !matchAddress) {
-//             return false;
-//         } else {
-//             return true
-//         }
-
-//     });
-
-//     // Jika data.length sama dengan 0 / string kosong / [] saja, maka lakukan aksi dibawah
-//     if (data.length === 0) {
-//         const err = new Error('Data is Empty');
-//         err.status = 404;
-//         throw err;
-//     }
-
-
-//     return { resultQuery };
-// }
 
 export async function createUser(newUser) {
     const data = await getUsers();
@@ -154,9 +67,7 @@ export async function getUserById(id) {
     const data = await pool.query(`SELECT * FROM users where id = $1`, [id]);
 
     if (data.rows.length === 0) {
-        const err = new Error('Data Not Found');
-        err.status = 404;
-        throw err;
+        throw new AppError('Data Not Found', 404, []);
     }
 
     return data.rows[0];
@@ -166,9 +77,7 @@ export async function deleteUserById(id) {
     const data = await pool.query(`DELETE FROM users WHERE id = $1 RETURNING *`, [id]);
 
     if (data.rows.length === 0) {
-        const err = new Error('Data Not Found');
-        err.status = 404;
-        throw err;
+        throw new AppError('Data Not Found', 404, []);
     }
 
     return data.rows[0];

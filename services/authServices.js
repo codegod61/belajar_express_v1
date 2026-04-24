@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import pool from '../config/dbConfig.js';
 import { generateId } from '../utils/ulid.js';
+import AppError from '../utils/errorHandling.js';
 
 async function getUserByEmail(email) {
     const data = await pool.query(`SELECT * FROM users where email = $1 LIMIT 1`, [email]);
@@ -18,16 +19,12 @@ export async function loginUser({email, password}) {
 
     const user = await getUserByEmail(email);
     if(!user) {
-        const err = new Error('Invalid email or password');
-        err.status = 404;
-        throw err;
+        throw new AppError('Invalid email or password', 404, []);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if(!isPasswordValid) {
-        const err = new Error('Invalid email or password');
-        err.status = 404;
-        throw err;
+        throw new AppError('Invalid email or password', 404, []);
     }
 
     const token = jwt.sign(
@@ -37,7 +34,7 @@ export async function loginUser({email, password}) {
     );
 
     return {
-        user: { email: user.email },
+        user: { id: user.id, email: user.email },
         token
     }
 }
@@ -48,9 +45,7 @@ export async function registerUser(newUser) {
     const saltRound = 12;
     const existingUser = await getUserByEmail(newUser.email);
     if(existingUser) {
-        const err = new Error('User already exists');
-        err.status = 409;
-        throw err;
+        throw new AppError('User already exists', 409, []);
     }
 
     const hashedPassword = await bcrypt.hash(newUser.password, saltRound);
@@ -61,5 +56,5 @@ export async function registerUser(newUser) {
         [id, newUser.name, newUser.email, hashedPassword]
     );
 
-    return;
+    return { id };
 }

@@ -1,21 +1,19 @@
 import express from 'express';
 import * as ProductController from '../controllers/productControllers.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { logMethod, logOriginalUrl } from '../utils/logger.js';
+import { validate } from '../middlewares/validate.js';
+import { schemaCreateProduct } from '../validations/joiValidation.js';
 
 
 const router = express.Router();
 
-const logStuff = [logOriginalUrl, logMethod, authMiddleware];
 
-router.get('/', logStuff, ProductController.getProducts);
+router.get('/', authMiddleware, ProductController.getProducts);
 
-router.get('/filter', logStuff, ProductController.filterProductsData);
+router.post('/', authMiddleware, validate(schemaCreateProduct), ProductController.createProduct);
 
-router.post('/', logStuff, ProductController.createProduct);
+router.get('/:id', authMiddleware, ProductController.getProductById);
 
-router.get('/:id', logStuff, ProductController.getProductById);
-
-router.delete('/:id', logStuff, ProductController.deleteProductById);
+router.delete('/:id', authMiddleware, ProductController.deleteProductById);
 
 export default router;

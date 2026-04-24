@@ -1,9 +1,17 @@
-export function logOriginalUrl(req, res, next) {
-    console.log('Request URL:', req.originalUrl);
-    next();
+import pino from "pino";
+
+const LOG_LEVEL = {
+    development: 'debug',
+    test: 'silent',
+    production: 'info'
 }
 
-export function logMethod(req, res, next) {
-    console.log('Request Type:', req.method);
-    next();
-};
+export const logger = pino({
+  level: LOG_LEVEL[process.env.NODE_ENV],
+  transport: process.env.NODE_ENV !== 'production'
+    ? {
+        target: 'pino-pretty',
+        options: { colorize: true }
+      }
+    : undefined
+});

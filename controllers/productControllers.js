@@ -1,13 +1,14 @@
-import { createDataProduct, deleteProductDataById, filterDataProducts, getDataProducts, getProductDataById } from "../services/productServices.js";
+import { createDataProduct, deleteProductDataById, getDataProducts, getProductDataById } from "../services/productServices.js";
 
 
 export const getProducts = async (req, res, next) => {
     try {
         const { prodName, priceStart, priceEnd, prodDesc, page, limit } = req.query;
+        req.log.info({ prodName, priceStart, priceEnd, prodDesc, page, limit }, 'Get products request');
 
         const result = await getDataProducts({ page, limit, prodName, priceStart, priceEnd, prodDesc });
 
-        // const filterData = await filterDataProducts({ prodName, prodPrice, prodDesc, queryPage, queryLimit });
+        req.log.info({ prodName, priceStart, priceEnd, prodDesc, page, limit }, 'Get products success');
 
         return res.status(200).json({
             message: "Data found",
@@ -19,94 +20,64 @@ export const getProducts = async (req, res, next) => {
             }
         });
     } catch (err) {
+        req.log.error(err, 'Get products failed');
         next(err);
     }
 };
 
-export const filterProductsData = async (req, res, next) => {
-    try {
-        const { name, price, description } = req.query;
-
-        const data = await filterDataProducts({ name, price, description });
-
-        return res.status(200).json({
-            message: data.message,
-            data: data.data
-        });
-        
-    } catch (err) {
-        next(err);
-    }
-}
-
 export const createProduct = async (req, res, next) => {
     try {
-        const { name, price, description } = req.body;
+        const { name, price, description } = req.validatedBody;
+        req.log.info({ name }, 'Create product request');
 
-        // cek body kosong (lebih clean daripada Object.keys)
-        if(!name && price === undefined && !description) {
-            const err = new Error('Data tidak boleh kosong, pastikan name, price, dan description diisi');
-            err.status = 400;
-            throw err;
-        }
+        await createDataProduct({ name, price, description });
 
-        // cek field wajib
-        if(!name || price === undefined || !description) {
-            const err = new Error('Name, Price, dan Description wajib diisi');
-            err.status = 400;
-            throw err;
-        }
-
-        const parsedPrice = parseInt(price);
-
-        // validasi tipe data
-        if (
-            (Number.isNaN(parsedPrice) || parsedPrice < 0 || price.toString().trim() === '') ||
-            (typeof name !== 'string' || name.trim() === '') ||
-            (typeof description !== 'string' || description.trim() === '')
-        ) {
-            const err = new Error('Price harus berupa angka positif, Name dan Description tidak boleh kosong');
-            err.status = 400;
-            throw err;
-        }
-
-        await createDataProduct({ name, price: parsedPrice, description });
+        req.log.info({ name, price, description }, 'Product created successfully');
 
         return res.status(201).json({
             message: "Product created successfully",
-            data: req.body
+            data: req.validatedBody
         })
     } catch (err) {
+        req.log.error(err, 'Create product failed');
         next(err);
     }
 }
 
 export const getProductById = async (req, res, next) => {
     try {
-        const id = parseInt(req.params.id);
+        const id = req.params.id;
+        req.log.info({ id }, 'Get product by ID request');
 
         const result = await getProductDataById(id);
+
+        req.log.info({ id }, 'Get product by ID success');
 
         return res.status(200).json({
             message: "Data found",
             data: result
         });
     } catch (err) {
+        req.log.error(err, 'Get product by ID failed');
         next(err);
     }
 }
 
 export const deleteProductById = async (req, res, next) => {
     try {
-        const id = parseInt(req.params.id);
+        const id = req.params.id;
+        req.log.info({ id }, 'Delete product request');
 
         const result = await deleteProductDataById(id);
+
+        req.log.info({ id }, 'Delete product success');
 
         return res.status(200).json({
             message: "Data deleted successfully",
             data: result
         });
     } catch (err) {
+        req.log.error(err, 'Delete product failed');
         next(err);
     }
 }

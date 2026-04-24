@@ -1,23 +1,25 @@
 import jwt from 'jsonwebtoken';
+import AppError from '../utils/errorHandling.js';
 
 export function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    const err = new Error('Authorization header missing');
-    err.status = 401;
-    return next(err);
+    return next(new AppError('Authorization header missing', 401, []));
   }
-  const token = authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader?.split(' ')[1];
 
   try {
     const decoded =  jwt.verify(token, process.env.SECRET_KEY);
     req.user = decoded;
     next();
   } catch (err) {
-    console.error('Error verifying token: ', err);
-    const error = new Error('Invalid token');
-    error.status = 403;
-    return next(error);
+    // req.log.info({
+    //   err,
+    //   msg: 'JWT Verification Failed',
+    //   path: req.url,
+    //   method: req.method
+    // });
+    return next(new AppError('Invalid token', 403, [{ field: 'token', message: 'Token is invalid or expired' }]));
   }
 };
