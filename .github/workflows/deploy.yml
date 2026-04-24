@@ -68,9 +68,6 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Login Railway
-        run: railway login --token $RAILWAY_TOKEN
-
       - name: Link Project
         run: railway link --project $RAILWAY_PROJECT_ID --service $RAILWAY_SERVICE_ID
 
