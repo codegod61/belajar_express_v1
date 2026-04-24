@@ -3,6 +3,11 @@ import { Pool } from "pg";
 let pool;
 
 console.log('Current NODE_ENV:', process.env.NODE_ENV);
+console.log('current user: ', process.env.DB_USER);
+console.log('current host: ', process.env.DB_HOST);
+console.log('current database: ', process.env.DB_NAME_TEST);
+console.log('current password: ', process.env.DB_PASSWORD);
+console.log('current port: ', process.env.DB_PORT);
 
 if (process.env.NODE_ENV == 'development') {
   pool = new Pool({
